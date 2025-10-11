@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import MovieCard from "@/components/MovieCard";
 import { useAppDispatch } from "@/lib/redux/hooks";
 import { addToWatchlist, addRating } from "@/lib/redux/slices";
 import { Movie } from "@/lib/redux/types";
+import Image from "next/image";
 
 export default function DetailPage() {
   const params = useParams();
@@ -28,12 +28,12 @@ export default function DetailPage() {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [review, setReview] = useState("");
+  const [shareCaption, setShareCaption] = useState("");
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
   const type = params.type as "movie" | "tv";
   const id = parseInt(params.id as string);
 
-  // Fetch movie/TV details
   const { data: details, isLoading } = useQuery({
     queryKey: [type, id],
     queryFn: () =>
@@ -42,21 +42,18 @@ export default function DetailPage() {
         : tmdbService.getTVDetails(id),
   });
 
-  // Fetch similar content
   const { data: similar } = useQuery({
     queryKey: ["similar", type, id],
     queryFn: () => tmdbService.getSimilar(type, id),
     enabled: !!details,
   });
 
-  // Check if in watchlist
   const { data: watchlistCheck } = useQuery({
     queryKey: ["watchlist-check", id, type, session?.user?.id],
     queryFn: () => supabaseService.isInWatchlist(session!.user!.id, id, type),
     enabled: !!session?.user,
   });
 
-  // Get user's rating
   const { data: userRatingData } = useQuery({
     queryKey: ["user-rating", id, type, session?.user?.id],
     queryFn: () => supabaseService.getRating(session!.user!.id, id, type),
@@ -76,7 +73,6 @@ export default function DetailPage() {
     }
   }, [userRatingData]);
 
-  // Add to watchlist mutation
   const watchlistMutation = useMutation({
     mutationFn: async () => {
       const watchlistItem = {
@@ -84,7 +80,12 @@ export default function DetailPage() {
         movie_id: id,
         media_type: type,
         title: details?.title || details?.name || "",
-        poster_path: details?.poster_path || null,
+        poster_path: details?.poster_path || "",
+        overview: details?.overview || "",
+        backdrop_path: details?.backdrop_path || "",
+        genre_ids: details?.genres?.map((g) => g.id) || [],
+        vote_average: details?.vote_average || 0,
+        release_date: details?.release_date || details?.first_air_date || "",
         status: "plan_to_watch" as const,
       };
       return supabaseService.addToWatchlist(watchlistItem);
@@ -100,7 +101,6 @@ export default function DetailPage() {
     },
   });
 
-  // Submit rating mutation
   const ratingMutation = useMutation({
     mutationFn: async () => {
       const ratingData = {
@@ -110,7 +110,12 @@ export default function DetailPage() {
         rating: userRating,
         review: review || undefined,
         title: details?.title || details?.name || "",
-        poster_path: details?.poster_path || undefined,
+        poster_path: details?.poster_path || "",
+        overview: details?.overview || "",
+        backdrop_path: details?.backdrop_path || "",
+        genre_ids: details?.genres?.map((g) => g.id) || [],
+        vote_average: details?.vote_average || 0,
+        release_date: details?.release_date || details?.first_air_date || "",
       };
       return supabaseService.upsertRating(ratingData);
     },
@@ -126,7 +131,6 @@ export default function DetailPage() {
     },
   });
 
-  // Share to community mutation
   const shareMutation = useMutation({
     mutationFn: async () => {
       const post = {
@@ -135,14 +139,23 @@ export default function DetailPage() {
         media_type: type,
         title: details?.title || details?.name || "",
         poster_path: details?.poster_path || null,
-        content: `Check out this amazing ${type}!`,
+        content: shareCaption || `Check out this amazing ${type}!`,
       };
       return supabaseService.createCommunityPost(post);
     },
     onSuccess: () => {
       setShowShareModal(false);
+      setShareCaption("");
+
+      queryClient.invalidateQueries({
+        queryKey: ["community-posts"],
+      });
+
       toast.success("Shared to community!");
-      router.push("/community");
+
+      setTimeout(() => {
+        router.push("/community");
+      }, 100);
     },
     onError: () => {
       toast.error("Failed to share");
@@ -223,11 +236,17 @@ export default function DetailPage() {
       {/* Hero Section */}
       <div className="relative h-[80vh] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={`https://image.tmdb.org/t/p/original${details.backdrop_path}`}
-            alt={title}
+          <Image
+            src={
+              details.backdrop_path
+                ? `https://image.tmdb.org/t/p/original${details.backdrop_path}`
+                : "/no-img.png"
+            }
+            alt={title ?? ""}
+            fill
             className="w-full h-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e27] via-[#0a0e27]/80 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e27] via-transparent to-transparent" />
         </div>
@@ -354,30 +373,48 @@ export default function DetailPage() {
       {details.credits?.cast && details.credits.cast.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h2 className="text-2xl font-bold mb-6">Cast</h2>
-          <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide">
-            {details.credits.cast.slice(0, 10).map((person) => (
-              <div key={person.id} className="flex-shrink-0 w-32">
-                <div className="glass rounded-lg overflow-hidden card-hover">
-                  <img
-                    src={
-                      person.profile_path
-                        ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-                        : "/placeholder-person.png"
-                    }
-                    alt={person.name}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-2">
-                    <p className="font-semibold text-sm line-clamp-1">
-                      {person.name}
-                    </p>
-                    <p className="text-xs text-gray-400 line-clamp-1">
-                      {person.character}
-                    </p>
+          <div className="relative group">
+            <div
+              className="flex overflow-x-auto gap-4 pb-4 
+        [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+        scroll-smooth"
+            >
+              {details.credits.cast.slice(0, 10).map((person, index) => (
+                <motion.div
+                  key={person.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  className="flex-shrink-0 w-32 transform transition-all duration-300 hover:scale-105"
+                >
+                  <div className="glass rounded-lg overflow-hidden card-hover">
+                    <div className="relative">
+                      <img
+                        src={
+                          person.profile_path
+                            ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+                            : "/placeholder-person.png"
+                        }
+                        alt={person.name}
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    <div className="p-2">
+                      <p className="font-semibold text-sm line-clamp-1 text-white">
+                        {person.name}
+                      </p>
+                      <p className="text-xs text-gray-300 line-clamp-1">
+                        {person.character}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-[#0a0e27] to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-[#0a0e27] to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         </section>
       )}
@@ -409,61 +446,155 @@ export default function DetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={() => setShowRatingModal(false)}
           >
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            {/* Background Overlay dengan Animasi Blur */}
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative glass rounded-xl p-6 max-w-md w-full"
+              initial={{
+                backdropFilter: "blur(0px)",
+                backgroundColor: "rgba(0,0,0,0)",
+              }}
+              animate={{
+                backdropFilter: "blur(8px)",
+                backgroundColor: "rgba(0,0,0,0.7)",
+              }}
+              exit={{
+                backdropFilter: "blur(0px)",
+                backgroundColor: "rgba(0,0,0,0)",
+              }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="absolute inset-0"
+            />
+
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{
+                type: "spring",
+                damping: 25,
+                stiffness: 300,
+                duration: 0.4,
+              }}
+              className="relative glass rounded-xl p-4 sm:p-6 max-w-md w-full mx-2 sm:mx-4 border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-2xl font-bold mb-4">Rate this {type}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">
+                Rate this {type}
+              </h3>
               <div className="space-y-4">
-                <div className="flex justify-center space-x-2">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                    <button
-                      key={rating}
-                      onClick={() => setUserRating(rating)}
-                      onMouseEnter={() => setHoverRating(rating)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      className={`w-10 h-10 rounded-lg font-semibold transition-all ${
-                        (
-                          hoverRating
-                            ? hoverRating >= rating
-                            : userRating >= rating
-                        )
-                          ? "bg-yellow-500 text-black scale-110"
-                          : "glass hover:bg-white/10"
-                      }`}
+                {/* Rating Stars 1-10 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  className="flex flex-col items-center space-y-4"
+                >
+                  <div className="w-full max-w-xs mx-auto">
+                    <div className="flex flex-wrap justify-center gap-0.5 sm:gap-1">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+                        <motion.button
+                          key={star}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setUserRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="p-0.5 transition-all duration-200"
+                        >
+                          <Star
+                            className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                              (
+                                hoverRating
+                                  ? hoverRating >= star
+                                  : userRating >= star
+                              )
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-400 fill-gray-400/20"
+                            } transition-all duration-200`}
+                          />
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rating Number Display */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: "spring" }}
+                    className="flex items-center space-x-2"
+                  >
+                    <span className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                      {userRating || 0}
+                    </span>
+                    <span className="text-gray-400 text-lg sm:text-xl">
+                      / 10
+                    </span>
+                  </motion.div>
+
+                  {/* Rating Label */}
+                  {userRating > 0 && (
+                    <motion.p
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-sm sm:text-base text-gray-300 text-center px-2"
                     >
-                      {rating}
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  value={review}
-                  onChange={(e) => setReview(e.target.value)}
-                  placeholder="Write a review (optional)"
-                  className="w-full h-32 glass rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="flex space-x-3">
+                      {userRating <= 3 && "Poor"}
+                      {userRating === 4 && "Below Average"}
+                      {userRating === 5 && "Average"}
+                      {userRating === 6 && "Above Average"}
+                      {userRating === 7 && "Good"}
+                      {userRating === 8 && "Very Good"}
+                      {userRating === 9 && "Excellent"}
+                      {userRating === 10 && "Masterpiece"}
+                    </motion.p>
+                  )}
+                </motion.div>
+
+                {/* Review Textarea */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
+                  className="space-y-2"
+                >
+                  <label className="block text-sm font-medium text-gray-300">
+                    Review (optional)
+                  </label>
+                  <textarea
+                    value={review}
+                    onChange={(e) => setReview(e.target.value)}
+                    placeholder="Share your thoughts about this movie/show..."
+                    className="w-full h-24 sm:h-32 glass rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm"
+                  />
+                </motion.div>
+
+                {/* Action Buttons - Responsive */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                  className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-2"
+                >
                   <button
                     onClick={handleSubmitRating}
-                    disabled={ratingMutation.isPending}
-                    className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all disabled:opacity-50"
+                    disabled={ratingMutation.isPending || userRating === 0}
+                    className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-[#2596be] to-[#1b5186] hover:brightness-110 hover:shadow-lg hover:shadow-blue-500/30  font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 text-sm sm:text-base"
                   >
-                    {ratingMutation.isPending ? "Submitting..." : "Submit"}
+                    {ratingMutation.isPending
+                      ? "Submitting..."
+                      : "Submit Rating"}
                   </button>
                   <button
                     onClick={() => setShowRatingModal(false)}
-                    className="px-4 py-2 rounded-lg glass hover:bg-white/10 transition-colors"
+                    className="px-4 py-3 glass hover:bg-white/10 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm sm:text-base"
                   >
                     Cancel
                   </button>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </motion.div>
@@ -477,36 +608,130 @@ export default function DetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={() => setShowShareModal(false)}
           >
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            {/* Background Overlay dengan Animasi Blur */}
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative glass rounded-xl p-6 max-w-md w-full"
+              initial={{
+                backdropFilter: "blur(0px)",
+                backgroundColor: "rgba(0,0,0,0)",
+              }}
+              animate={{
+                backdropFilter: "blur(8px)",
+                backgroundColor: "rgba(0,0,0,0.7)",
+              }}
+              exit={{
+                backdropFilter: "blur(0px)",
+                backgroundColor: "rgba(0,0,0,0)",
+              }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="absolute inset-0"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{
+                type: "spring",
+                damping: 25,
+                stiffness: 300,
+                duration: 0.4,
+              }}
+              className="relative glass rounded-xl p-6 max-w-md w-full border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-2xl font-bold mb-4">Share to Community</h3>
-              <p className="text-gray-300 mb-6">
-                Share {title} with the Cinefy community!
-              </p>
-              <div className="flex space-x-3">
+
+              {/* Preview Item */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-white/5"
+              >
+                <img
+                  src={`https://image.tmdb.org/t/p/w200${details?.poster_path}`}
+                  alt={title}
+                  className="w-16 h-24 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <h4 className="font-semibold line-clamp-1">{title}</h4>
+                  <p className="text-sm text-gray-400">
+                    {type === "movie" ? "Movie" : "TV Show"} •{" "}
+                    {releaseDate ? new Date(releaseDate).getFullYear() : "N/A"}
+                  </p>
+                  <div className="flex items-center space-x-1 mt-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xs">
+                      {details?.vote_average?.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Caption Input */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="mb-4"
+              >
+                <label
+                  htmlFor="share-caption"
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                >
+                  Add a caption (optional)
+                </label>
+                <textarea
+                  id="share-caption"
+                  value={shareCaption}
+                  onChange={(e) => setShareCaption(e.target.value)}
+                  placeholder={`Share your thoughts about ${title}...`}
+                  className="w-full h-24 glass rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all duration-200"
+                  maxLength={500}
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>What makes this {type} special?</span>
+                  <span>{shareCaption.length}/500</span>
+                </div>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-300 mb-6 text-sm"
+              >
+                Your post will be visible to the Cinefy community
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="flex space-x-3"
+              >
                 <button
                   onClick={handleShare}
                   disabled={shareMutation.isPending}
-                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all disabled:opacity-50"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all duration-200 disabled:opacity-50 transform hover:scale-105"
                 >
                   {shareMutation.isPending ? "Sharing..." : "Share Now"}
                 </button>
                 <button
-                  onClick={() => setShowShareModal(false)}
-                  className="px-4 py-2 rounded-lg glass hover:bg-white/10 transition-colors"
+                  onClick={() => {
+                    setShowShareModal(false);
+                    setShareCaption("");
+                  }}
+                  className="px-4 py-2 glass hover:bg-white/10 rounded-lg transition-all duration-200 transform hover:scale-105"
                 >
                   Cancel
                 </button>
-              </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}

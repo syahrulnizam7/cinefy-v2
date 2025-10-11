@@ -34,7 +34,6 @@ export default function HomePage() {
         <HeroSkeleton />
       ) : heroMovie ? (
         <div className="relative h-[70vh] overflow-hidden">
-          {/* Background Image */}
           <div className="absolute inset-0">
             <img
               src={`https://image.tmdb.org/t/p/original${heroMovie.backdrop_path}`}
@@ -93,7 +92,6 @@ export default function HomePage() {
 
       {/* Content Sections */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        {/* Trending This Week */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl md:text-3xl font-bold">

@@ -96,6 +96,7 @@ export interface CommunityPost {
   user?: User;
   comments?: Comment[];
   isLiked?: boolean;
+  comment_count?: number;
 }
 
 export interface Comment {

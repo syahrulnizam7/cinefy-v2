@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Star, Calendar } from "lucide-react";
 import { Movie } from "@/lib/redux/types";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface MovieCardProps {
   movie: Movie;
@@ -16,7 +17,7 @@ export default function MovieCard({ movie, index = 0 }: MovieCardProps) {
   const mediaType = movie.media_type || "movie";
   const imageUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : "/placeholder-movie.png";
+    : "/no-img.png";
 
   return (
     <motion.div
@@ -29,9 +30,10 @@ export default function MovieCard({ movie, index = 0 }: MovieCardProps) {
         <div className="relative overflow-hidden rounded-xl glass card-hover cursor-pointer">
           {/* Poster Image */}
           <div className="aspect-[2/3] relative overflow-hidden bg-gray-800">
-            <img
-              src={imageUrl}
-              alt={title}
+            <Image
+              src={imageUrl }
+              alt={title ?? ""}
+              fill
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
             />

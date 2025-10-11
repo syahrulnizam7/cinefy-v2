@@ -150,13 +150,14 @@ export const supabaseService = {
 
   // Get all community posts
   getCommunityPosts: async (userId?: string): Promise<CommunityPost[]> => {
-    // eslint-disable-next-line prefer-const
+    // Dapatkan semua posts dengan comment count
     let query = supabase
       .from("community_posts")
       .select(
         `
-        *,
-        user:users(id, name, email, image)
+      *,
+      user:users(id, name, email, image),
+      comments:comments(count)
       `
       )
       .order("created_at", { ascending: false });
@@ -165,29 +166,43 @@ export const supabaseService = {
 
     if (error) throw error;
 
-    // Check if user has liked each post
-    if (userId && data) {
-      const postsWithLikes = await Promise.all(
-        data.map(async (post) => {
-          const { data: likeData } = await supabase
-            .from("post_likes")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("post_id", post.id)
-            .single();
+    // Process data to include comment_count
+    const processedData =
+      data?.map((post) => ({
+        ...post,
+        comment_count: post.comments?.[0]?.count || 0,
+      })) || [];
 
-          return {
-            ...post,
-            isLiked: !!likeData,
-          };
-        })
+    // Jika ada userId, dapatkan SEMUA likes user sekaligus
+    if (userId && processedData.length > 0) {
+      // Dapatkan semua post IDs
+      const postIds = processedData.map((post) => post.id);
+
+      // Single query untuk mendapatkan semua likes user
+      const { data: userLikes, error: likesError } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", userId)
+        .in("post_id", postIds);
+
+      if (likesError) throw likesError;
+
+      // Buat Set untuk lookup yang cepat
+      const likedPostIds = new Set(
+        userLikes?.map((like) => like.post_id) || []
       );
+
+      // Map isLiked ke setiap post
+      const postsWithLikes = processedData.map((post) => ({
+        ...post,
+        isLiked: likedPostIds.has(post.id),
+      }));
+
       return postsWithLikes;
     }
 
-    return data || [];
+    return processedData;
   },
-
   // Create community post
   createCommunityPost: async (
     post: Omit<CommunityPost, "id" | "created_at" | "updated_at" | "likes">

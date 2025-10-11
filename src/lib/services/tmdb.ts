@@ -75,22 +75,29 @@ export const tmdbService = {
     return data;
   },
 
-  // Get movies by genre
-  getMoviesByGenre: async (genreId: number, page: number = 1) => {
+  // Get movies by multiple genre
+    getMoviesByGenre: async (genreIds: number | number[], page: number = 1) => {
     const { data } = await tmdbApi.get("/discover/movie", {
-      params: { with_genres: genreId, page },
+      params: { 
+        with_genres: Array.isArray(genreIds) ? genreIds.join(',') : genreIds, 
+        page,
+        sort_by: 'popularity.desc'
+      },
     });
     return data;
   },
 
-  // Get TV shows by genre
-  getTVByGenre: async (genreId: number, page: number = 1) => {
+  // Get TV shows by multiple genres
+  getTVByGenre: async (genreIds: number | number[], page: number = 1) => {
     const { data } = await tmdbApi.get("/discover/tv", {
-      params: { with_genres: genreId, page },
+      params: { 
+        with_genres: Array.isArray(genreIds) ? genreIds.join(',') : genreIds, 
+        page,
+        sort_by: 'popularity.desc'
+      },
     });
     return data;
   },
-
   // Get movie genres
   getMovieGenres: async () => {
     const { data } = await tmdbApi.get("/genre/movie/list");
