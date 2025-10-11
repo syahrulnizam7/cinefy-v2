@@ -36,11 +36,38 @@ export const supabaseService = {
   },
 
   // Remove from watchlist
-  removeFromWatchlist: async (id: string): Promise<void> => {
-    const { error } = await supabase.from("watchlist").delete().eq("id", id);
+  // Fungsi untuk mendapatkan detail item watchlist
+getWatchlistItem: async (userId: string, movieId: number, mediaType: string) => {
+  const { data, error } = await supabase
+    .from('watchlist')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('movie_id', movieId)
+    .eq('media_type', mediaType)
+    .single();
 
-    if (error) throw error;
-  },
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error getting watchlist item:', error);
+    return null;
+  }
+
+  return data;
+},
+
+// Fungsi untuk menghapus dari watchlist
+removeFromWatchlist: async (watchlistId: string) => {
+  const { error } = await supabase
+    .from('watchlist')
+    .delete()
+    .eq('id', watchlistId);
+
+  if (error) {
+    console.error('Error removing from watchlist:', error);
+    throw error;
+  }
+
+  return { success: true };
+},
 
   // Update watchlist status
   updateWatchlistStatus: async (
@@ -127,6 +154,8 @@ export const supabaseService = {
     if (error && error.code !== "PGRST116") throw error;
     return data;
   },
+
+  
 
   // Get average rating for a movie
   getAverageRating: async (

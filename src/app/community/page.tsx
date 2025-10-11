@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import PageLoader from "@/components/Loader";
 
 export default function CommunityPage() {
   const { data: session } = useSession();
@@ -206,24 +207,7 @@ export default function CommunityPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="glass rounded-xl p-6 animate-pulse">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gray-700/50" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-700/50 rounded w-1/4" />
-                  <div className="h-3 bg-gray-700/50 rounded w-1/6" />
-                </div>
-              </div>
-              <div className="h-20 bg-gray-700/50 rounded mb-4" />
-              <div className="flex space-x-4">
-                <div className="h-8 w-16 bg-gray-700/50 rounded" />
-                <div className="h-8 w-16 bg-gray-700/50 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <PageLoader />
       </div>
     );
   }
@@ -249,7 +233,7 @@ export default function CommunityPage() {
             <p className="text-gray-400 mb-4">No posts yet</p>
             <Link
               href="/explore"
-              className="inline-block px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
+              className="inline-block px-6 py-3 rounded-lg bg-gradient-to-r from-[#2596be] to-[#1b5186] hover:brightness-110 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
             >
               Explore Movies & TV Shows
             </Link>

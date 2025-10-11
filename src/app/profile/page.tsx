@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("watchlist");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null); 
 
   const { data: watchlist, isLoading: watchlistLoading } = useQuery({
     queryKey: ["watchlist", session?.user?.id],
@@ -126,7 +127,7 @@ export default function ProfilePage() {
                 </p>
                 <p className="text-sm text-gray-400">Ratings</p>
               </div>
-              <div className="text-center">
+              {/* <div className="text-center">
                 <p className="text-2xl font-bold text-pink-400">
                   {(
                     (ratings?.reduce((sum, r) => sum + Number(r.rating), 0) ??
@@ -134,7 +135,7 @@ export default function ProfilePage() {
                   ).toFixed(1)}
                 </p>
                 <p className="text-sm text-gray-400">Avg Rating</p>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -171,8 +172,9 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className="relative group"
+              onMouseEnter={() => setHoveredItem(item.id)} 
+              onMouseLeave={() => setHoveredItem(null)}
             >
-              {/* Delete Button dengan Animasi */}
               <motion.button
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -184,21 +186,21 @@ export default function ProfilePage() {
                 <Trash2 className="w-4 h-4 text-white" />
               </motion.button>
 
-              {/* Review Bubble untuk Ratings */}
-              {activeTab === "ratings" && item.review && (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0, x: 10, y: -10 }}
-                  whileHover={{ scale: 1, opacity: 1, x: 0, y: 0 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                  className="absolute top-0 right-0 z-10"
-                >
-                  <div className="bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg max-w-[200px] relative">
+              <AnimatePresence>
+                {activeTab === "ratings" && item.review && hoveredItem === item.id && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute -top-2 right-0 z-10 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg max-w-[200px]"
+                  >
                     <p className="italic line-clamp-4">{item.review}</p>
                     {/* Chat Bubble Tail */}
                     <div className="absolute top-full right-3 w-0 h-0 border-t-[10px] border-t-gray-900 border-x-[8px] border-x-transparent"></div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <MovieCard
                 movie={{
@@ -215,7 +217,6 @@ export default function ProfilePage() {
                 index={index}
               />
               
-              {/* User Rating Badge untuk Ratings dengan Animasi */}
               {activeTab === "ratings" && item.rating && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}

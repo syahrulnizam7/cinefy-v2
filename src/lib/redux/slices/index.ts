@@ -50,8 +50,17 @@ export const watchlistSlice = createSlice({
     addToWatchlist: (state, action: PayloadAction<WatchlistItem>) => {
       state.items.push(action.payload);
     },
-    removeFromWatchlist: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter((item) => item.id !== action.payload);
+    removeFromWatchlist: (
+      state,
+      action: PayloadAction<{ movie_id: number; media_type: string }>
+    ) => {
+      state.items = state.items.filter(
+        (item) =>
+          !(
+            item.movie_id === action.payload.movie_id &&
+            item.media_type === action.payload.media_type
+          )
+      );
     },
     updateWatchlistStatus: (
       state,

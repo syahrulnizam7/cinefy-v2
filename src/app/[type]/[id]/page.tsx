@@ -6,14 +6,19 @@ import { tmdbService } from "@/lib/services/tmdb";
 import { supabaseService } from "@/lib/services/supabase";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { Play, Plus, Star, Share2, Clock, Calendar, Check } from "lucide-react";
+import { Play, Plus, Star, Share2, Clock, Calendar, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import MovieCard from "@/components/MovieCard";
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { addToWatchlist, addRating } from "@/lib/redux/slices";
+import {
+  addToWatchlist,
+  removeFromWatchlist,
+  addRating,
+} from "@/lib/redux/slices";
 import { Movie } from "@/lib/redux/types";
 import Image from "next/image";
+import { PageLoader } from "@/components/Loader";
 
 export default function DetailPage() {
   const params = useParams();
@@ -29,6 +34,7 @@ export default function DetailPage() {
   const [review, setReview] = useState("");
   const [shareCaption, setShareCaption] = useState("");
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [watchlistId, setWatchlistId] = useState<string | null>(null);
 
   const type = params.type as "movie" | "tv";
   const id = parseInt(params.id as string);
@@ -47,9 +53,11 @@ export default function DetailPage() {
     enabled: !!details,
   });
 
-  const { data: watchlistCheck } = useQuery({
-    queryKey: ["watchlist-check", id, type, session?.user?.id],
-    queryFn: () => supabaseService.isInWatchlist(session!.user!.id, id, type),
+  // Query untuk mendapatkan data watchlist yang lebih detail
+  const { data: watchlistData } = useQuery({
+    queryKey: ["watchlist-detail", id, type, session?.user?.id],
+    queryFn: () =>
+      supabaseService.getWatchlistItem(session!.user!.id, id, type),
     enabled: !!session?.user,
   });
 
@@ -60,10 +68,11 @@ export default function DetailPage() {
   });
 
   useEffect(() => {
-    if (watchlistCheck !== undefined) {
-      setIsInWatchlist(watchlistCheck);
+    if (watchlistData) {
+      setIsInWatchlist(!!watchlistData);
+      setWatchlistId(watchlistData?.id || null);
     }
-  }, [watchlistCheck]);
+  }, [watchlistData]);
 
   useEffect(() => {
     if (userRatingData) {
@@ -72,7 +81,8 @@ export default function DetailPage() {
     }
   }, [userRatingData]);
 
-  const watchlistMutation = useMutation({
+  // Mutation untuk menambah watchlist
+  const addWatchlistMutation = useMutation({
     mutationFn: async () => {
       const watchlistItem = {
         user_id: session!.user!.id,
@@ -92,11 +102,32 @@ export default function DetailPage() {
     onSuccess: (result) => {
       dispatch(addToWatchlist(result));
       setIsInWatchlist(true);
+      setWatchlistId(result.id);
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist-detail"] });
       toast.success("Added to watchlist!");
     },
     onError: () => {
       toast.error("Failed to add to watchlist");
+    },
+  });
+
+  // Mutation untuk menghapus watchlist
+  const removeWatchlistMutation = useMutation({
+    mutationFn: async () => {
+      if (!watchlistId) throw new Error("No watchlist ID");
+      return supabaseService.removeFromWatchlist(watchlistId);
+    },
+    onSuccess: () => {
+      dispatch(removeFromWatchlist({ movie_id: id, media_type: type }));
+      setIsInWatchlist(false);
+      setWatchlistId(null);
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist-detail"] });
+      toast.success("Removed from watchlist!");
+    },
+    onError: () => {
+      toast.error("Failed to remove from watchlist");
     },
   });
 
@@ -161,13 +192,19 @@ export default function DetailPage() {
     },
   });
 
-  const handleAddToWatchlist = () => {
+  // Fungsi toggle watchlist
+  const handleToggleWatchlist = () => {
     if (!session) {
-      toast.error("Please sign in to add to watchlist");
+      toast.error("Please sign in to manage watchlist");
       router.push("/auth/signin");
       return;
     }
-    watchlistMutation.mutate();
+
+    if (isInWatchlist) {
+      removeWatchlistMutation.mutate();
+    } else {
+      addWatchlistMutation.mutate();
+    }
   };
 
   const handleSubmitRating = () => {
@@ -194,15 +231,13 @@ export default function DetailPage() {
     shareMutation.mutate();
   };
 
+  // Fungsi untuk navigasi ke halaman detail cast
+  const handleCastClick = (personId: number) => {
+    router.push(`/person/${personId}`);
+  };
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="shimmer w-16 h-16 rounded-full" />
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!details) {
@@ -233,7 +268,7 @@ export default function DetailPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative h-[80vh] overflow-hidden">
+      <div className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src={
@@ -244,45 +279,54 @@ export default function DetailPage() {
             alt={title ?? ""}
             fill
             className="w-full h-full object-cover"
+            priority
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e27] via-[#0a0e27]/80 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e27] via-transparent to-transparent" />
         </div>
 
-        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-end pb-12">
-          <div className="flex flex-col md:flex-row gap-8 w-full">
+        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-end pb-8 md:pb-12">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full items-center md:items-end">
             {/* Poster */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex-shrink-0"
+              className="flex-shrink-0 w-40 sm:w-48 md:w-56 lg:w-64"
             >
-              <Image
-                src={`https://image.tmdb.org/t/p/w500${details.poster_path}`}
-                alt={title??""}
-                className="w-48 md:w-64 rounded-xl shadow-2xl glass border-2 border-white/10"
-                layout="responsive"
-                width={500}
-                height={750}
-              />
+              <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 bg-gray-800">
+                <Image
+                  src={
+                    details.poster_path
+                      ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
+                      : "/no-img.png"
+                  }
+                  alt={title ?? ""}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 192px, (max-width: 1024px) 224px, 256px"
+                  priority
+                />
+              </div>
             </motion.div>
 
             {/* Info */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex-1 space-y-4"
+              className="flex-1 space-y-4 text-center md:text-left"
             >
-              <h1 className="text-4xl md:text-5xl font-bold">{title}</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+                {title}
+              </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 text-sm">
                 <div className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-lg font-semibold">
+                  <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-yellow-400" />
+                  <span className="text-base sm:text-lg font-semibold">
                     {details.vote_average.toFixed(1)}
                   </span>
-                  <span className="text-gray-400">/10</span>
+                  <span className="text-gray-400 text-sm">/10</span>
                 </div>
                 {releaseDate && (
                   <div className="flex items-center space-x-2">
@@ -300,59 +344,67 @@ export default function DetailPage() {
                   </div>
                 )}
                 {details.number_of_seasons && (
-                  <div className="px-3 py-1 rounded-full glass text-sm">
+                  <div className="px-3 py-1 rounded-full bg-white/10 text-sm backdrop-blur-sm">
                     {details.number_of_seasons} Season
                     {details.number_of_seasons > 1 ? "s" : ""}
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {details.genres?.map((genre) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1 rounded-full glass text-sm"
+                    className="px-3 py-1 rounded-full bg-white/10 text-sm backdrop-blur-sm"
                   >
                     {genre.name}
                   </span>
                 ))}
               </div>
 
-              <p className="text-gray-300 max-w-3xl leading-relaxed">
+              <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-3xl mx-auto md:mx-0 line-clamp-3 sm:line-clamp-4">
                 {details.overview}
               </p>
 
               {/* Actions */}
-              <div className="flex flex-wrap gap-3 pt-4">
+              <div className="flex flex-wrap gap-3 pt-4 justify-center md:justify-start">
                 {trailer && (
                   <a
                     href={`https://www.youtube.com/watch?v=${trailer.key}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 px-6 py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors"
+                    className="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-200 transition-colors text-sm sm:text-base"
                   >
-                    <Play className="w-5 h-5 fill-black" />
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-black" />
                     <span>Watch Trailer</span>
                   </a>
                 )}
                 <button
-                  onClick={handleAddToWatchlist}
-                  disabled={isInWatchlist || watchlistMutation.isPending}
-                  className="flex items-center space-x-2 px-6 py-3 rounded-lg glass hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleToggleWatchlist}
+                  disabled={
+                    addWatchlistMutation.isPending ||
+                    removeWatchlistMutation.isPending
+                  }
+                  className="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {isInWatchlist ? (
-                    <Check className="w-5 h-5" />
+                    <>
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>Remove from List</span>
+                    </>
                   ) : (
-                    <Plus className="w-5 h-5" />
+                    <>
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>Add to List</span>
+                    </>
                   )}
-                  <span>{isInWatchlist ? "In Watchlist" : "Add to List"}</span>
                 </button>
                 <button
                   onClick={() => setShowRatingModal(true)}
-                  className="flex items-center space-x-2 px-6 py-3 rounded-lg glass hover:bg-white/10 transition-colors"
+                  className="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors text-sm sm:text-base"
                 >
                   <Star
-                    className={`w-5 h-5 ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 ${
                       userRatingData ? "fill-yellow-400 text-yellow-400" : ""
                     }`}
                   />
@@ -360,9 +412,9 @@ export default function DetailPage() {
                 </button>
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="flex items-center space-x-2 px-6 py-3 rounded-lg glass hover:bg-white/10 transition-colors"
+                  className="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors text-sm sm:text-base"
                 >
-                  <Share2 className="w-5 h-5" />
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>Share</span>
                 </button>
               </div>
@@ -371,42 +423,45 @@ export default function DetailPage() {
         </div>
       </div>
 
-      {/* Cast */}
       {details.credits?.cast && details.credits.cast.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-2xl font-bold mb-6">Cast</h2>
-          <div className="relative group">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Cast</h2>
+          <div className="relative">
             <div
-              className="flex overflow-x-auto gap-4 pb-4 
+              className="flex overflow-x-auto gap-3 sm:gap-4 pb-4 
         [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
         scroll-smooth"
             >
-              {details.credits.cast.slice(0, 10).map((person, index) => (
+              {details.credits.cast.slice(0, 12).map((person, index) => (
                 <motion.div
                   key={person.id}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="flex-shrink-0 w-32 transform transition-all duration-300 hover:scale-105"
+                  className="flex-shrink-0 w-28 sm:w-32 cursor-pointer"
+                  onClick={() => handleCastClick(person.id)}
                 >
-                  <div className="glass rounded-lg overflow-hidden card-hover">
-                    <div className="relative">
+                  <div className="bg-white/5 rounded-lg overflow-hidden transition-all duration-300 group hover:bg-white/10 hover:shadow-lg hover:shadow-blue-500/20 border border-white/10 hover:border-white/20">
+                    <div className="relative aspect-[2/3]">
                       <Image
                         src={
                           person.profile_path
                             ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
-                            : "/placeholder-person.png"
+                            : "/no-img.png"
                         }
                         alt={person.name}
-                        className="w-full h-40 object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 112px, 128px"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                      {/* Gradient overlay yang konsisten */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                     </div>
-                    <div className="p-2">
-                      <p className="font-semibold text-sm line-clamp-1 text-white">
+                    <div className="p-2 sm:p-3">
+                      <p className="font-semibold text-xs sm:text-sm line-clamp-1 text-white group-hover:text-blue-300 transition-colors">
                         {person.name}
                       </p>
-                      <p className="text-xs text-gray-300 line-clamp-1">
+                      <p className="text-xs text-gray-300 line-clamp-1 mt-1 group-hover:text-gray-200 transition-colors">
                         {person.character}
                       </p>
                     </div>
@@ -414,20 +469,17 @@ export default function DetailPage() {
                 </motion.div>
               ))}
             </div>
-
-            <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-[#0a0e27] to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-[#0a0e27] to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         </section>
       )}
 
-      {/* Similar */}
+      {/* Similar Section */}
       {similar?.results && similar.results.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-2xl font-bold mb-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
             Similar {type === "movie" ? "Movies" : "Shows"}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {similar.results
               .slice(0, 10)
               .map((item: Movie, index: number | undefined) => (
@@ -448,11 +500,9 @@ export default function DetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={() => setShowRatingModal(false)}
           >
-            {/* Background Overlay dengan Animasi Blur */}
             <motion.div
               initial={{
                 backdropFilter: "blur(0px)",
@@ -466,7 +516,6 @@ export default function DetailPage() {
                 backdropFilter: "blur(0px)",
                 backgroundColor: "rgba(0,0,0,0)",
               }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="absolute inset-0"
             />
 
@@ -474,76 +523,49 @@ export default function DetailPage() {
               initial={{ scale: 0.8, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              transition={{
-                type: "spring",
-                damping: 25,
-                stiffness: 300,
-                duration: 0.4,
-              }}
-              className="relative glass rounded-xl p-4 sm:p-6 max-w-md w-full mx-2 sm:mx-4 border border-white/10"
+              className="relative bg-gray-900 rounded-xl p-4 sm:p-6 max-w-md w-full mx-2 border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">
+              <h3 className="text-xl font-bold mb-4 text-center">
                 Rate this {type}
               </h3>
               <div className="space-y-4">
-                {/* Rating Stars 1-10 */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                  className="flex flex-col items-center space-y-4"
-                >
-                  <div className="w-full max-w-xs mx-auto">
-                    <div className="flex flex-wrap justify-center gap-0.5 sm:gap-1">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-                        <motion.button
-                          key={star}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => setUserRating(star)}
-                          onMouseEnter={() => setHoverRating(star)}
-                          onMouseLeave={() => setHoverRating(0)}
-                          className="p-0.5 transition-all duration-200"
-                        >
-                          <Star
-                            className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                              (
-                                hoverRating
-                                  ? hoverRating >= star
-                                  : userRating >= star
-                              )
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-400 fill-gray-400/20"
-                            } transition-all duration-200`}
-                          />
-                        </motion.button>
-                      ))}
-                    </div>
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+                      <motion.button
+                        key={star}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setUserRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-1"
+                      >
+                        <Star
+                          className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                            (
+                              hoverRating
+                                ? hoverRating >= star
+                                : userRating >= star
+                            )
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-400 fill-gray-400/20"
+                          } transition-all duration-200`}
+                        />
+                      </motion.button>
+                    ))}
                   </div>
 
-                  {/* Rating Number Display */}
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.2, type: "spring" }}
-                    className="flex items-center space-x-2"
-                  >
-                    <span className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl font-bold text-yellow-400">
                       {userRating || 0}
                     </span>
-                    <span className="text-gray-400 text-lg sm:text-xl">
-                      / 10
-                    </span>
-                  </motion.div>
+                    <span className="text-gray-400 text-lg">/ 10</span>
+                  </div>
 
-                  {/* Rating Label */}
                   {userRating > 0 && (
-                    <motion.p
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm sm:text-base text-gray-300 text-center px-2"
-                    >
+                    <p className="text-gray-300 text-center text-sm">
                       {userRating <= 3 && "Poor"}
                       {userRating === 4 && "Below Average"}
                       {userRating === 5 && "Average"}
@@ -552,17 +574,11 @@ export default function DetailPage() {
                       {userRating === 8 && "Very Good"}
                       {userRating === 9 && "Excellent"}
                       {userRating === 10 && "Masterpiece"}
-                    </motion.p>
+                    </p>
                   )}
-                </motion.div>
+                </div>
 
-                {/* Review Textarea */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15, duration: 0.3 }}
-                  className="space-y-2"
-                >
+                <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-300">
                     Review (optional)
                   </label>
@@ -570,21 +586,15 @@ export default function DetailPage() {
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
                     placeholder="Share your thoughts about this movie/show..."
-                    className="w-full h-24 sm:h-32 glass rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm"
+                    className="w-full h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
-                </motion.div>
+                </div>
 
-                {/* Action Buttons - Responsive */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                  className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-2"
-                >
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
                     onClick={handleSubmitRating}
                     disabled={ratingMutation.isPending || userRating === 0}
-                    className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-[#2596be] to-[#1b5186] hover:brightness-110 hover:shadow-lg hover:shadow-blue-500/30  font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 text-sm sm:text-base"
+                    className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all disabled:opacity-50 text-sm"
                   >
                     {ratingMutation.isPending
                       ? "Submitting..."
@@ -592,11 +602,11 @@ export default function DetailPage() {
                   </button>
                   <button
                     onClick={() => setShowRatingModal(false)}
-                    className="px-4 py-3 glass hover:bg-white/10 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm sm:text-base"
+                    className="px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all text-sm"
                   >
                     Cancel
                   </button>
-                </motion.div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -610,11 +620,9 @@ export default function DetailPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={() => setShowShareModal(false)}
           >
-            {/* Background Overlay dengan Animasi Blur */}
             <motion.div
               initial={{
                 backdropFilter: "blur(0px)",
@@ -628,99 +636,64 @@ export default function DetailPage() {
                 backdropFilter: "blur(0px)",
                 backgroundColor: "rgba(0,0,0,0)",
               }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
               className="absolute inset-0"
             />
 
-            {/* Modal Content */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              transition={{
-                type: "spring",
-                damping: 25,
-                stiffness: 300,
-                duration: 0.4,
-              }}
-              className="relative glass rounded-xl p-6 max-w-md w-full border border-white/10"
+              className="relative bg-gray-900 rounded-xl p-6 max-w-md w-full border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-2xl font-bold mb-4">Share to Community</h3>
+              <h3 className="text-xl font-bold mb-4">Share to Community</h3>
 
-              {/* Preview Item */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-                className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-white/5"
-              >
-                <Image
-                  src={`https://image.tmdb.org/t/p/w200${details?.poster_path}`}
-                  alt={title??""}
-                  className="w-16 h-24 object-cover rounded-lg"
-                />
+              <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-gray-800">
+                <div className="relative w-16 h-24 rounded-lg overflow-hidden">
+                  <Image
+                    src={`https://image.tmdb.org/t/p/w200${details?.poster_path}`}
+                    alt={title ?? ""}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold line-clamp-1">{title}</h4>
-                  <p className="text-sm text-gray-400">
+                  <h4 className="font-semibold line-clamp-1 text-sm">
+                    {title}
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-1">
                     {type === "movie" ? "Movie" : "TV Show"} •{" "}
                     {releaseDate ? new Date(releaseDate).getFullYear() : "N/A"}
                   </p>
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                    <span className="text-xs">
-                      {details?.vote_average?.toFixed(1)}
-                    </span>
-                  </div>
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Caption Input */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.3 }}
-                className="mb-4"
-              >
-                <label
-                  htmlFor="share-caption"
-                  className="block text-sm font-medium text-gray-300 mb-2"
-                >
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Add a caption (optional)
                 </label>
                 <textarea
-                  id="share-caption"
                   value={shareCaption}
                   onChange={(e) => setShareCaption(e.target.value)}
                   placeholder={`Share your thoughts about ${title}...`}
-                  className="w-full h-24 glass rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all duration-200"
+                  className="w-full h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   maxLength={500}
                 />
                 <div className="flex justify-between text-xs text-gray-400 mt-1">
                   <span>What makes this {type} special?</span>
                   <span>{shareCaption.length}/500</span>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                className="text-gray-300 mb-6 text-sm"
-              >
+              <p className="text-gray-300 mb-6 text-sm">
                 Your post will be visible to the Cinefy community
-              </motion.p>
+              </p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-                className="flex space-x-3"
-              >
+              <div className="flex gap-3">
                 <button
                   onClick={handleShare}
                   disabled={shareMutation.isPending}
-                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all duration-200 disabled:opacity-50 transform hover:scale-105"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all disabled:opacity-50 text-sm"
                 >
                   {shareMutation.isPending ? "Sharing..." : "Share Now"}
                 </button>
@@ -729,11 +702,11 @@ export default function DetailPage() {
                     setShowShareModal(false);
                     setShareCaption("");
                   }}
-                  className="px-4 py-2 glass hover:bg-white/10 rounded-lg transition-all duration-200 transform hover:scale-105"
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all text-sm"
                 >
                   Cancel
                 </button>
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         )}
