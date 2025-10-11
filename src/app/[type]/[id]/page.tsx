@@ -18,7 +18,7 @@ import {
 } from "@/lib/redux/slices";
 import { Movie } from "@/lib/redux/types";
 import Image from "next/image";
-import { PageLoader } from "@/components/Loader";
+import  Loader  from "@/components/Loader";
 
 export default function DetailPage() {
   const params = useParams();
@@ -237,7 +237,7 @@ export default function DetailPage() {
   };
 
   if (isLoading) {
-    return <PageLoader />;
+    return <Loader />;
   }
 
   if (!details) {

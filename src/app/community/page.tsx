@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import PageLoader from "@/components/Loader";
+import Loader from "@/components/Loader";
 
 export default function CommunityPage() {
   const { data: session } = useSession();
@@ -207,7 +207,7 @@ export default function CommunityPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PageLoader />
+        <Loader />
       </div>
     );
   }

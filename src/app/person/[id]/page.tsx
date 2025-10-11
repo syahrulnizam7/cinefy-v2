@@ -7,7 +7,7 @@ import { tmdbService } from "@/lib/services/tmdb";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Calendar, MapPin, Star, Film } from "lucide-react";
-import { PageLoader } from "@/components/Loader";
+import Loader  from "@/components/Loader";
 import { useState } from "react";
 
 export default function PersonDetailPage() {
@@ -28,7 +28,7 @@ export default function PersonDetailPage() {
   });
 
   if (isLoading) {
-    return <PageLoader />;
+    return <Loader />;
   }
 
   if (!person) {

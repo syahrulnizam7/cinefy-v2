@@ -129,14 +129,14 @@ export default function Loader() {
         </div>
 
         {/* Loading Text */}
-        <motion.p
+        {/* <motion.p
           className="mt-12 text-gray-400 font-medium"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
           Loading your experience
-        </motion.p>
+        </motion.p> */}
 
         {/* Animated Dots */}
         <motion.div className="flex justify-center space-x-1 mt-2">
@@ -180,49 +180,49 @@ export default function Loader() {
   );
 }
 
-// Loader untuk halaman spesifik (lebih kecil)
-export function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0e27]">
-      <div className="text-center">
-        <motion.div
-          className="relative w-16 h-16 mx-auto mb-4"
-          animate={{
-            rotate: 360,
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        >
-          <div className="absolute inset-0 border-4 border-[#2596be]/30 rounded-full" />
-          <div className="absolute inset-2 border-4 border-[#1b5186]/50 rounded-full" />
-          <motion.div
-            className="absolute inset-4 bg-gradient-to-r from-[#2596be] to-[#1b5186] rounded-full"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        </motion.div>
-        <motion.p
-          className="text-gray-400"
-          animate={{
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-          }}
-        >
-          Loading...
-        </motion.p>
-      </div>
-    </div>
-  );
-}
+// // Loader untuk halaman spesifik (lebih kecil)
+// export function PageLoader() {
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-[#0a0e27]">
+//       <div className="text-center">
+//         <motion.div
+//           className="relative w-16 h-16 mx-auto mb-4"
+//           animate={{
+//             rotate: 360,
+//           }}
+//           transition={{
+//             duration: 2,
+//             repeat: Infinity,
+//             ease: "linear",
+//           }}
+//         >
+//           <div className="absolute inset-0 border-4 border-[#2596be]/30 rounded-full" />
+//           <div className="absolute inset-2 border-4 border-[#1b5186]/50 rounded-full" />
+//           <motion.div
+//             className="absolute inset-4 bg-gradient-to-r from-[#2596be] to-[#1b5186] rounded-full"
+//             animate={{
+//               scale: [1, 1.2, 1],
+//             }}
+//             transition={{
+//               duration: 1.5,
+//               repeat: Infinity,
+//               ease: "easeInOut",
+//             }}
+//           />
+//         </motion.div>
+//         <motion.p
+//           className="text-gray-400"
+//           animate={{
+//             opacity: [0.5, 1, 0.5],
+//           }}
+//           transition={{
+//             duration: 2,
+//             repeat: Infinity,
+//           }}
+//         >
+//           Loading...
+//         </motion.p>
+//       </div>
+//     </div>
+//   );
+// }
