@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +37,6 @@ export default function CommunityPage() {
   const likeMutation = useMutation({
     mutationFn: async ({
       postId,
-      isLiked,
     }: {
       postId: string;
       isLiked: boolean;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -15,7 +16,6 @@ import {
   X,
   Film,
   Star,
-  Tv,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -55,7 +55,7 @@ export default function Navbar() {
       if (searchQuery.trim().length < 2) return { results: [] };
       const data = await tmdbService.search(searchQuery, 1);
       return {
-        results: data.results?.slice(0, 8) || [] 
+        results: data.results?.slice(0, 8) || [],
       };
     },
     enabled: searchQuery.trim().length >= 2 && isSearchOpen,
@@ -72,7 +72,7 @@ export default function Navbar() {
   };
 
   const handleResultClick = (item: any) => {
-    const mediaType = item.media_type === 'movie' ? 'movie' : 'tv';
+    const mediaType = item.media_type === "movie" ? "movie" : "tv";
     window.location.href = `/${mediaType}/${item.id}`;
     setIsSearchOpen(false);
     setSearchQuery("");
@@ -80,27 +80,32 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+      if (
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
         setIsSearchOpen(false);
       }
     };
 
     if (isSearchOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSearchOpen]);
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? "bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/30" 
-          : "glass-dark border-b border-white/10"
-      }`}>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/30"
+            : "glass-dark border-b border-white/10"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center space-x-2 group">
@@ -265,10 +270,10 @@ export default function Navbar() {
                     </motion.div>
                   );
                 })}
-                
+
                 {/* Mobile Profile Section */}
                 {session && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -357,7 +362,10 @@ export default function Navbar() {
               onClick={(e) => e.stopPropagation()}
               ref={searchInputRef}
             >
-              <form onSubmit={handleSearch} className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden">
+              <form
+                onSubmit={handleSearch}
+                className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl overflow-hidden"
+              >
                 {/* Search Input */}
                 <div className="flex items-center space-x-3 p-4 border-b border-white/10">
                   <Search className="w-6 h-6 text-white/70" />
@@ -391,94 +399,129 @@ export default function Navbar() {
                       {isSearching && (
                         <div className="p-4 text-center">
                           <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                          <p className="text-white/70 text-sm mt-2">Searching...</p>
+                          <p className="text-white/70 text-sm mt-2">
+                            Searching...
+                          </p>
                         </div>
                       )}
 
                       {/* Results */}
-                      {!isSearching && searchResults?.results && searchResults.results.length > 0 && (
-                        <div className="p-2">
-                          {searchResults.results.map((item: any, index: number) => (
-                            <motion.button
-                              key={`${item.id}-${item.media_type}`}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              onClick={() => handleResultClick(item)}
-                              className="w-full text-left p-3 rounded-lg hover:bg-white/10 transition-all duration-200 flex items-center space-x-3 group"
-                            >
-                              {/* Poster */}
-                              <div className="flex-shrink-0 w-12 h-16 bg-gray-700/50 rounded overflow-hidden">
-                                {item.poster_path ? (
-                                  <img
-                                    src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
-                                    alt={item.title || item.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gray-600">
-                                    <Film className="w-6 h-6 text-gray-400" />
+                      {!isSearching &&
+                        searchResults?.results &&
+                        searchResults.results.length > 0 && (
+                          <div className="p-2">
+                            {searchResults.results.map(
+                              (item: any, index: number) => (
+                                <motion.button
+                                  key={`${item.id}-${item.media_type}`}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  onClick={() => handleResultClick(item)}
+                                  className="w-full text-left p-3 rounded-lg hover:bg-white/10 transition-all duration-200 flex items-center space-x-3 group"
+                                >
+                                  {/* Poster */}
+                                  <div className="flex-shrink-0 w-12 h-16 bg-gray-700/50 rounded overflow-hidden">
+                                    {item.poster_path ? (
+                                      <Image
+                                        src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
+                                        alt={item.title || item.name}
+                                        width={48} 
+                                        height={64}
+                                        className="object-cover group-hover:scale-110 transition-transform duration-200"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-600">
+                                        <Film className="w-6 h-6 text-gray-400" />
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
 
-                              {/* Info */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <h3 className="font-semibold text-white truncate group-hover:text-blue-300 transition-colors">
-                                    {item.title || item.name}
-                                  </h3>
-                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                    item.media_type === 'movie' 
-                                      ? 'bg-blue-500/20 text-blue-300' 
-                                      : 'bg-purple-500/20 text-purple-300'
-                                  }`}>
-                                    {item.media_type === 'movie' ? 'Movie' : 'TV'}
-                                  </span>
-                                </div>
-                                
-                                <div className="flex items-center space-x-3 text-sm text-white/70">
-                                  <div className="flex items-center space-x-1">
-                                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                                    <span>{item.vote_average?.toFixed(1)}</span>
+                                  {/* Info */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <h3 className="font-semibold text-white truncate group-hover:text-blue-300 transition-colors">
+                                        {item.title || item.name}
+                                      </h3>
+                                      <span
+                                        className={`px-2 py-1 rounded text-xs font-medium ${
+                                          item.media_type === "movie"
+                                            ? "bg-blue-500/20 text-blue-300"
+                                            : "bg-purple-500/20 text-purple-300"
+                                        }`}
+                                      >
+                                        {item.media_type === "movie"
+                                          ? "Movie"
+                                          : "TV"}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center space-x-3 text-sm text-white/70">
+                                      <div className="flex items-center space-x-1">
+                                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                        <span>
+                                          {item.vote_average?.toFixed(1)}
+                                        </span>
+                                      </div>
+                                      <span>•</span>
+                                      <span>
+                                        {item.release_date
+                                          ? new Date(
+                                              item.release_date
+                                            ).getFullYear()
+                                          : item.first_air_date
+                                          ? new Date(
+                                              item.first_air_date
+                                            ).getFullYear()
+                                          : "N/A"}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <span>•</span>
-                                  <span>
-                                    {item.release_date 
-                                      ? new Date(item.release_date).getFullYear()
-                                      : item.first_air_date 
-                                        ? new Date(item.first_air_date).getFullYear()
-                                        : 'N/A'
-                                    }
-                                  </span>
-                                </div>
-                              </div>
 
-                              {/* Arrow */}
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </div>
-                            </motion.button>
-                          ))}
-                        </div>
-                      )}
+                                  {/* Arrow */}
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <svg
+                                      className="w-5 h-5 text-white/50"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 5l7 7-7 7"
+                                      />
+                                    </svg>
+                                  </div>
+                                </motion.button>
+                              )
+                            )}
+                          </div>
+                        )}
 
                       {/* No Results */}
-                      {!isSearching && searchQuery.trim().length >= 2 && searchResults?.results?.length === 0 && (
-                        <div className="p-6 text-center">
-                          <Search className="w-12 h-12 text-white/30 mx-auto mb-3" />
-                          <p className="text-white/70">No results found for "{searchQuery}"</p>
-                          <p className="text-white/50 text-sm mt-1">Try different keywords</p>
-                        </div>
-                      )}
+                      {!isSearching &&
+                        searchQuery.trim().length >= 2 &&
+                        searchResults?.results?.length === 0 && (
+                          <div className="p-6 text-center">
+                            <Search className="w-12 h-12 text-white/30 mx-auto mb-3" />
+                            <p className="text-white/70">
+                              No results found for &quot;{searchQuery}&quot;
+                            </p>
+                            <p className="text-white/50 text-sm mt-1">
+                              Try different keywords
+                            </p>
+                          </div>
+                        )}
 
                       {/* Search Prompt */}
                       {searchQuery.trim().length < 2 && (
                         <div className="p-6 text-center">
                           <Search className="w-12 h-12 text-white/30 mx-auto mb-3" />
-                          <p className="text-white/70">Type at least 2 characters to search</p>
+                          <p className="text-white/70">
+                            Type at least 2 characters to search
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -486,19 +529,33 @@ export default function Navbar() {
                 </AnimatePresence>
 
                 {/* View All Results Button */}
-                {searchQuery.trim().length >= 2 && searchResults?.results && searchResults.results.length > 0 && (
-                  <div className="p-3 border-t border-white/10">
-                    <button
-                      type="submit"
-                      className="w-full py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-all duration-200 flex items-center justify-center space-x-2"
-                    >
-                      <span>View all results for "{searchQuery}"</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
+                {searchQuery.trim().length >= 2 &&
+                  searchResults?.results &&
+                  searchResults.results.length > 0 && (
+                    <div className="p-3 border-t border-white/10">
+                      <button
+                        type="submit"
+                        className="w-full py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-300 hover:text-blue-200 transition-all duration-200 flex items-center justify-center space-x-2"
+                      >
+                        <span>
+                          View all results for &quot;{searchQuery}&quot;
+                        </span>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
               </form>
             </motion.div>
           </motion.div>

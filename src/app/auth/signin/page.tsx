@@ -1,7 +1,6 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { Film } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 

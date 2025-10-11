@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { supabaseService, supabase } from "@/lib/services/supabase";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import MovieCard from "@/components/MovieCard";
 import { MovieGridSkeleton } from "@/components/LoadingSkeleton";
-import { Film, Star, User, Search, Trash2, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Film, Star, User, Search } from "lucide-react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import toast from "react-hot-toast";
 
 const tabs = [
   { id: "watchlist", label: "Watchlist", icon: Film },
@@ -20,11 +18,9 @@ const tabs = [
 ];
 
 export default function UserProfilePage() {
-  const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
   const [activeTab, setActiveTab] = useState("watchlist");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const userId = params.userId as string;
 

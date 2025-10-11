@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -259,10 +258,13 @@ export default function DetailPage() {
               animate={{ opacity: 1, x: 0 }}
               className="flex-shrink-0"
             >
-              <img
+              <Image
                 src={`https://image.tmdb.org/t/p/w500${details.poster_path}`}
-                alt={title}
+                alt={title??""}
                 className="w-48 md:w-64 rounded-xl shadow-2xl glass border-2 border-white/10"
+                layout="responsive"
+                width={500}
+                height={750}
               />
             </motion.div>
 
@@ -389,7 +391,7 @@ export default function DetailPage() {
                 >
                   <div className="glass rounded-lg overflow-hidden card-hover">
                     <div className="relative">
-                      <img
+                      <Image
                         src={
                           person.profile_path
                             ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
@@ -653,9 +655,9 @@ export default function DetailPage() {
                 transition={{ delay: 0.1, duration: 0.3 }}
                 className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-white/5"
               >
-                <img
+                <Image
                   src={`https://image.tmdb.org/t/p/w200${details?.poster_path}`}
-                  alt={title}
+                  alt={title??""}
                   className="w-16 h-24 object-cover rounded-lg"
                 />
                 <div className="flex-1">

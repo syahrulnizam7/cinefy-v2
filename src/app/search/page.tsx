@@ -8,8 +8,9 @@ import MovieCard from "@/components/MovieCard";
 import { MovieGridSkeleton } from "@/components/LoadingSkeleton";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+import { Suspense } from "react";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 
@@ -73,5 +74,25 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SearchLoading() {
+  return (
+    <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center space-x-3 mb-8">
+        <Search className="w-8 h-8 text-blue-400" />
+        <div className="h-12 w-48 bg-gray-700/50 rounded-lg animate-pulse" />
+      </div>
+      <MovieGridSkeleton count={20} />
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoading />}>
+      <SearchContent />
+    </Suspense>
   );
 }

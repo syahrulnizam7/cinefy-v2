@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Movie, MovieDetails } from "../redux/types";
+import { MovieDetails } from "../redux/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;

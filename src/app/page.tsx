@@ -8,6 +8,7 @@ import { Play, Plus, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Movie } from "@/lib/redux/types";
+import Image from "next/image";
 
 export default function HomePage() {
   const { data: trendingData, isLoading: trendingLoading } = useQuery({
@@ -35,10 +36,12 @@ export default function HomePage() {
       ) : heroMovie ? (
         <div className="relative h-[70vh] overflow-hidden">
           <div className="absolute inset-0">
-            <img
+            <Image
               src={`https://image.tmdb.org/t/p/original${heroMovie.backdrop_path}`}
               alt={heroMovie.title || heroMovie.name}
               className="w-full h-full object-cover"
+              layout="fill"
+              objectFit="cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e27] via-[#0a0e27]/60 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e27] via-transparent to-transparent" />

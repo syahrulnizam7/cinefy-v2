@@ -64,7 +64,7 @@ export const supabaseService = {
     movieId: number,
     mediaType: "movie" | "tv"
   ): Promise<boolean> => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("watchlist")
       .select("id")
       .eq("user_id", userId)
@@ -151,7 +151,7 @@ export const supabaseService = {
   // Get all community posts
   getCommunityPosts: async (userId?: string): Promise<CommunityPost[]> => {
     // Dapatkan semua posts dengan comment count
-    let query = supabase
+    const query = supabase
       .from("community_posts")
       .select(
         `
