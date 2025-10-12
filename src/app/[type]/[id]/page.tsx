@@ -18,7 +18,7 @@ import {
 } from "@/lib/redux/slices";
 import { Movie } from "@/lib/redux/types";
 import Image from "next/image";
-import  Loader  from "@/components/Loader";
+import Loader from "@/components/Loader";
 
 export default function DetailPage() {
   const params = useParams();
@@ -287,14 +287,14 @@ export default function DetailPage() {
         </div>
 
         <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-end pb-8 md:pb-12">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full items-center md:items-end">
+          <div className="relative h-full flex flex-col md:flex-row gap-6 md:gap-8 w-full items-center md:items-end ">
             {/* Poster */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex-shrink-0 w-40 sm:w-48 md:w-56 lg:w-64"
             >
-              <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 bg-gray-800">
+              <div className="relative  aspect-[2/3] w-full rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 bg-gray-800">
                 <Image
                   src={
                     details.poster_path
