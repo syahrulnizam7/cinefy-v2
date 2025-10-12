@@ -25,18 +25,25 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("watchlist");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null); 
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
+  // Di dalam komponen ProfilePage
   const { data: watchlist, isLoading: watchlistLoading } = useQuery({
     queryKey: ["watchlist", session?.user?.id],
     queryFn: () => supabaseService.getWatchlist(session!.user!.id),
-    enabled: !!session?.user?.id && activeTab === "watchlist",
+    enabled: !!session?.user?.id,
   });
 
   const { data: ratings, isLoading: ratingsLoading } = useQuery({
     queryKey: ["ratings", session?.user?.id],
     queryFn: () => supabaseService.getRatings(session!.user!.id),
-    enabled: !!session?.user?.id && activeTab === "ratings",
+    enabled: !!session?.user?.id,
+  });
+
+  const { data: ratingsCount } = useQuery({
+    queryKey: ["ratingsCount", session?.user?.id],
+    queryFn: () => supabaseService.getRatingsCount(session!.user!.id),
+    enabled: !!session?.user?.id,
   });
 
   const deleteWatchlistMutation = useMutation({
@@ -84,7 +91,8 @@ export default function ProfilePage() {
     return null;
   }
 
-  const isLoading = activeTab === "watchlist" ? watchlistLoading : ratingsLoading;
+  const isLoading =
+    activeTab === "watchlist" ? watchlistLoading : ratingsLoading;
   const items = activeTab === "watchlist" ? watchlist : ratings;
 
   return (
@@ -123,7 +131,7 @@ export default function ProfilePage() {
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-400">
-                  {ratings?.length || 0}
+                  {ratingsCount ?? 0}
                 </p>
                 <p className="text-sm text-gray-400">Ratings</p>
               </div>
@@ -172,34 +180,42 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className="relative group"
-              onMouseEnter={() => setHoveredItem(item.id)} 
+              onMouseEnter={() => setHoveredItem(item.id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
               <motion.button
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: index * 0.05 + 0.1, type: "spring", stiffness: 200 }}
+                transition={{
+                  delay: index * 0.05 + 0.1,
+                  type: "spring",
+                  stiffness: 200,
+                }}
                 onClick={() => setDeleteConfirm(item.id)}
                 className="cursor-pointer absolute bottom-1 right-2 z-20 w-8 h-8 bg-red-500/90 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-colors"
-                title={`Delete ${activeTab === 'watchlist' ? 'from watchlist' : 'rating'}`}
+                title={`Delete ${
+                  activeTab === "watchlist" ? "from watchlist" : "rating"
+                }`}
               >
                 <Trash2 className="w-4 h-4 text-white" />
               </motion.button>
 
               <AnimatePresence>
-                {activeTab === "ratings" && item.review && hoveredItem === item.id && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute -top-2 right-0 z-10 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg max-w-[200px]"
-                  >
-                    <p className="italic line-clamp-4">{item.review}</p>
-                    {/* Chat Bubble Tail */}
-                    <div className="absolute top-full right-3 w-0 h-0 border-t-[10px] border-t-gray-900 border-x-[8px] border-x-transparent"></div>
-                  </motion.div>
-                )}
+                {activeTab === "ratings" &&
+                  item.review &&
+                  hoveredItem === item.id && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute -top-2 right-0 z-10 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg max-w-[200px]"
+                    >
+                      <p className="italic line-clamp-4">{item.review}</p>
+                      {/* Chat Bubble Tail */}
+                      <div className="absolute top-full right-3 w-0 h-0 border-t-[10px] border-t-gray-900 border-x-[8px] border-x-transparent"></div>
+                    </motion.div>
+                  )}
               </AnimatePresence>
 
               <MovieCard
@@ -207,7 +223,8 @@ export default function ProfilePage() {
                   id: item.movie_id,
                   title: item.title,
                   poster_path: item.poster_path,
-                  vote_average: activeTab === "ratings" ? 0 : item.vote_average || 0,
+                  vote_average:
+                    activeTab === "ratings" ? 0 : item.vote_average || 0,
                   media_type: item.media_type,
                   overview: item.overview || "",
                   backdrop_path: item.backdrop_path || "",
@@ -216,12 +233,16 @@ export default function ProfilePage() {
                 }}
                 index={index}
               />
-              
+
               {activeTab === "ratings" && item.rating && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: index * 0.05 + 0.15, type: "spring", stiffness: 200 }}
+                  transition={{
+                    delay: index * 0.05 + 0.15,
+                    type: "spring",
+                    stiffness: 200,
+                  }}
                   className="absolute bottom-2 right-12 z-10"
                 >
                   <div className="flex items-center space-x-1 bg-yellow-500/90 backdrop-blur-sm px-2 py-1 rounded-lg">
@@ -310,24 +331,30 @@ export default function ProfilePage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <p className="text-gray-300 mb-6">
-                Are you sure you want to remove this {activeTab === 'watchlist' ? 'from your watchlist' : 'rating'}?
+                Are you sure you want to remove this{" "}
+                {activeTab === "watchlist" ? "from your watchlist" : "rating"}?
               </p>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => {
-                    const item = (items ?? []).find((i: any) => i.id === deleteConfirm);
+                    const item = (items ?? []).find(
+                      (i: any) => i.id === deleteConfirm
+                    );
                     if (item) handleDelete(item);
                   }}
-                  disabled={deleteWatchlistMutation.isPending || deleteRatingMutation.isPending}
+                  disabled={
+                    deleteWatchlistMutation.isPending ||
+                    deleteRatingMutation.isPending
+                  }
                   className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-semibold transition-all disabled:opacity-50"
                 >
-                  {deleteWatchlistMutation.isPending || deleteRatingMutation.isPending 
-                    ? "Deleting..." 
-                    : "Delete"
-                  }
+                  {deleteWatchlistMutation.isPending ||
+                  deleteRatingMutation.isPending
+                    ? "Deleting..."
+                    : "Delete"}
                 </button>
                 <button
                   onClick={() => setDeleteConfirm(null)}

@@ -36,38 +36,41 @@ export const supabaseService = {
   },
 
   // Remove from watchlist
-  // Fungsi untuk mendapatkan detail item watchlist
-getWatchlistItem: async (userId: string, movieId: number, mediaType: string) => {
-  const { data, error } = await supabase
-    .from('watchlist')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('movie_id', movieId)
-    .eq('media_type', mediaType)
-    .single();
+  getWatchlistItem: async (
+    userId: string,
+    movieId: number,
+    mediaType: string
+  ) => {
+    const { data, error } = await supabase
+      .from("watchlist")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("movie_id", movieId)
+      .eq("media_type", mediaType)
+      .single();
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error getting watchlist item:', error);
-    return null;
-  }
+    if (error && error.code !== "PGRST116") {
+      console.error("Error getting watchlist item:", error);
+      return null;
+    }
 
-  return data;
-},
+    return data;
+  },
 
-// Fungsi untuk menghapus dari watchlist
-removeFromWatchlist: async (watchlistId: string) => {
-  const { error } = await supabase
-    .from('watchlist')
-    .delete()
-    .eq('id', watchlistId);
+  // Fungsi untuk menghapus dari watchlist
+  removeFromWatchlist: async (watchlistId: string) => {
+    const { error } = await supabase
+      .from("watchlist")
+      .delete()
+      .eq("id", watchlistId);
 
-  if (error) {
-    console.error('Error removing from watchlist:', error);
-    throw error;
-  }
+    if (error) {
+      console.error("Error removing from watchlist:", error);
+      throw error;
+    }
 
-  return { success: true };
-},
+    return { success: true };
+  },
 
   // Update watchlist status
   updateWatchlistStatus: async (
@@ -116,6 +119,16 @@ removeFromWatchlist: async (watchlistId: string) => {
     return data || [];
   },
 
+  getRatingsCount: async (userId: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from("ratings")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return count || 0;
+  },
+
   // Add or update rating
   upsertRating: async (
     rating: Omit<Rating, "id" | "created_at" | "updated_at">
@@ -154,8 +167,6 @@ removeFromWatchlist: async (watchlistId: string) => {
     if (error && error.code !== "PGRST116") throw error;
     return data;
   },
-
-  
 
   // Get average rating for a movie
   getAverageRating: async (
