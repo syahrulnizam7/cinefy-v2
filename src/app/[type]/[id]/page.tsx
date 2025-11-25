@@ -343,7 +343,7 @@ export default function DetailPage() {
                   </div>
                 )}
                 {details.number_of_seasons && (
-                  <div className="px-2 xs:px-3 py-1 rounded-full  bg-white/10 text-xs xs:text-sm backdrop-blur-sm">
+                  <div className="px-2 xs:px-3 py-1 rounded-full  bg-white/10 text-xs xs:text-sm backdrop-blur-sm text-[#39b5f0] font-semibold">
                     {details.number_of_seasons} Season
                     {details.number_of_seasons > 1 ? "s" : ""}
                   </div>
