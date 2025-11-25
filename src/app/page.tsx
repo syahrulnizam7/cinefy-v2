@@ -55,21 +55,21 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="max-w-2xl space-y-4"
             >
-              <h1 className="text-4xl md:text-6xl font-bold">
+              <h1 className="text-4xl md:text-6xl font-bold text-white">
                 {heroMovie.title || heroMovie.name}
               </h1>
               <div className="flex items-center space-x-4 text-sm">
                 <div className="flex items-center space-x-1">
                   <span className="text-yellow-400">★</span>
-                  <span>{heroMovie.vote_average.toFixed(1)}</span>
+                  <span className="text-white font-semi-bold">{heroMovie.vote_average.toFixed(1)}</span>
                 </div>
-                <span>•</span>
-                <span>
+                <span className="text-white font-semi-bold">•</span>
+                <span className="text-white font-semi-bold">
                   {new Date(
                     heroMovie.release_date || heroMovie.first_air_date
                   ).getFullYear()}
                 </span>
-                <span>•</span>
+                <span className="text-white font-semi-bold">•</span>
                 <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase">
                   {heroMovie.media_type}
                 </span>
@@ -97,8 +97,8 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Trending This Week
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Trending <span className="text-[#39b5f0]">This Week</span>
             </h2>
             <Link
               href="/explore"
@@ -124,7 +124,7 @@ export default function HomePage() {
         {/* Popular Movies */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">Popular Movies</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Popular <span className="text-[#39b5f0]">Movies</span></h2>
             <Link
               href="/explore?tab=movies"
               className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors"
@@ -153,7 +153,7 @@ export default function HomePage() {
         {/* Popular TV Shows */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">Popular TV Shows</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Popular <span className="text-[#39b5f0]">TV Shows</span></h2>
             <Link
               href="/explore?tab=tv"
               className="flex items-center space-x-1 text-blue-400 hover:text-blue-300 transition-colors"

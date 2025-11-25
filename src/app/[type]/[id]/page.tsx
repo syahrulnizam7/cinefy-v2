@@ -315,14 +315,14 @@ export default function DetailPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 space-y-3 xs:space-y-4 text-center md:text-left min-w-0 pb-6 md:pb-8"
             >
-              <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold leading-tight break-words">
+              <h1 className="text-white text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold leading-tight break-words">
                 {title}
               </h1>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 xs:gap-3 sm:gap-4 text-xs xs:text-sm">
                 <div className="flex items-center space-x-1 xs:space-x-2">
                   <Star className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-base xs:text-base sm:text-lg font-semibold">
+                  <span className="text-base xs:text-base sm:text-lg font-semibold text-gray-200">
                     {details.vote_average.toFixed(1)}
                   </span>
                   <span className="text-gray-400 text-xs xs:text-sm">/10</span>
@@ -330,20 +330,20 @@ export default function DetailPage() {
                 {releaseDate && (
                   <div className="flex items-center space-x-1 xs:space-x-2">
                     <Calendar className="w-4 h-4 xs:w-4 xs:h-4" />
-                    <span>{new Date(releaseDate).getFullYear()}</span>
+                    <span className="text-gray-400 font-semibold">{new Date(releaseDate).getFullYear()}</span>
                   </div>
                 )}
                 {details.runtime && (
                   <div className="flex items-center space-x-1 xs:space-x-2">
                     <Clock className="w-4 h-4 xs:w-4 xs:h-4" />
-                    <span>
+                    <span className="text-gray-400 font-semibold">
                       {Math.floor(details.runtime / 60)}h {details.runtime % 60}
                       m
                     </span>
                   </div>
                 )}
                 {details.number_of_seasons && (
-                  <div className="px-2 xs:px-3 py-1 rounded-full bg-white/10 text-xs xs:text-sm backdrop-blur-sm">
+                  <div className="px-2 xs:px-3 py-1 rounded-full  bg-white/10 text-xs xs:text-sm backdrop-blur-sm">
                     {details.number_of_seasons} Season
                     {details.number_of_seasons > 1 ? "s" : ""}
                   </div>
@@ -354,7 +354,7 @@ export default function DetailPage() {
                 {details.genres?.slice(0, 3).map((genre) => (
                   <span
                     key={genre.id}
-                    className="px-2 xs:px-3 py-1 rounded-full bg-white/10 text-xs xs:text-sm backdrop-blur-sm"
+                    className="px-2 xs:px-3 py-1 rounded-full text-[#39b5f0] bg-white/10 text-xs xs:text-sm backdrop-blur-sm"
                   >
                     {genre.name}
                   </span>
@@ -389,13 +389,13 @@ export default function DetailPage() {
                 >
                   {isInWatchlist ? (
                     <>
-                      <X className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                      <span className="truncate">Remove</span>
+                      <X className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" color="#e5e7eb" />
+                      <span className="truncate text-gray-200">Remove</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                      <span className="truncate">Add to List</span>
+                      <Plus className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" color="#e5e7eb" />
+                      <span className="truncate text-gray-200">Add to List</span>
                     </>
                   )}
                 </button>
@@ -407,15 +407,16 @@ export default function DetailPage() {
                     className={`w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0 ${
                       userRatingData ? "fill-yellow-400 text-yellow-400" : ""
                     }`}
+                    color="#e5e7eb"
                   />
-                  <span className="truncate">{userRatingData ? "Edit" : "Rate"}</span>
+                  <span className="truncate text-gray-200">{userRatingData ? "Edit" : "Rate"}</span>
                 </button>
                 <button
                   onClick={() => setShowShareModal(true)}
                   className="flex items-center space-x-1 xs:space-x-2 px-4 xs:px-5 sm:px-6 py-2.5 xs:py-3 sm:py-3 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors text-xs xs:text-sm sm:text-base flex-1 sm:flex-none justify-center min-w-0 max-w-[180px]"
                 >
-                  <Share2 className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                  <span className="truncate">Share</span>
+                  <Share2 className="w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 flex-shrink-0" color="#e5e7eb" />
+                  <span className="truncate text-gray-200">Share</span>
                 </button>
               </div>
             </motion.div>
@@ -528,7 +529,7 @@ export default function DetailPage() {
               className="relative bg-gray-900 rounded-xl p-4 xs:p-5 sm:p-6 max-w-md w-full mx-2 border border-white/10 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg xs:text-xl font-bold mb-4 text-center">
+              <h3 className="text-lg xs:text-xl font-bold mb-4 text-center text-gray-200">
                 Rate this {type}
               </h3>
               <div className="space-y-4">
@@ -588,7 +589,7 @@ export default function DetailPage() {
                     value={review}
                     onChange={(e) => setReview(e.target.value)}
                     placeholder="Share your thoughts about this movie/show..."
-                    className="w-full h-20 xs:h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full h-20 xs:h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-200"
                   />
                 </div>
 
@@ -596,7 +597,7 @@ export default function DetailPage() {
                   <button
                     onClick={handleSubmitRating}
                     disabled={ratingMutation.isPending || userRating === 0}
-                    className="flex-1 px-4 py-2.5 xs:py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold transition-all disabled:opacity-50 text-sm"
+                    className="flex-1 px-4 py-2.5 xs:py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 font-semibold text-white transition-all disabled:opacity-50 text-sm"
                   >
                     {ratingMutation.isPending
                       ? "Submitting..."
@@ -604,7 +605,7 @@ export default function DetailPage() {
                   </button>
                   <button
                     onClick={() => setShowRatingModal(false)}
-                    className="px-4 py-2.5 xs:py-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all text-sm xs:flex-none"
+                    className="px-4 py-2.5 xs:py-3 bg-gray-800 text-white hover:bg-gray-700 rounded-lg transition-all text-sm xs:flex-none"
                   >
                     Cancel
                   </button>
@@ -648,7 +649,7 @@ export default function DetailPage() {
               className="relative bg-gray-900 rounded-xl p-4 xs:p-5 sm:p-6 max-w-md w-full border border-white/10 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg xs:text-xl font-bold mb-4">Share to Community</h3>
+              <h3 className="text-lg xs:text-xl font-bold mb-4 text-gray-200">Share to Community</h3>
 
               <div className="flex items-center gap-3 xs:gap-4 mb-4 p-3 rounded-lg bg-gray-800">
                 <div className="relative w-12 xs:w-14 sm:w-16 h-18 xs:h-21 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
@@ -665,7 +666,7 @@ export default function DetailPage() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold line-clamp-2 text-sm xs:text-base">
+                  <h4 className="font-semibold line-clamp-2 text-sm xs:text-base text-gray-200">
                     {title}
                   </h4>
                   <p className="text-xs text-gray-400 mt-1">
@@ -683,7 +684,7 @@ export default function DetailPage() {
                   value={shareCaption}
                   onChange={(e) => setShareCaption(e.target.value)}
                   placeholder={`Share your thoughts about ${title}...`}
-                  className="w-full h-20 xs:h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full h-20 xs:h-24 bg-gray-800 rounded-lg p-3 resize-none outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-200"
                   maxLength={500}
                 />
                 <div className="flex justify-between text-xs text-gray-400 mt-1">

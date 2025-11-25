@@ -119,7 +119,7 @@ export default function ProfilePage() {
           )}
 
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold mb-2">{session.user?.name}</h1>
+            <h1 className="text-3xl font-bold mb-2 text-white">{session.user?.name}</h1>
             <p className="text-gray-400 mb-4">{session.user?.email}</p>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-6">

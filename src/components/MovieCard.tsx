@@ -43,7 +43,7 @@ export default function MovieCard({ movie, index = 0 }: MovieCardProps) {
 
             {/* Rating Badge */}
             {movie.vote_average > 0 && (
-              <div className="absolute top-2 right-2 flex items-center space-x-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg">
+              <div className="absolute top-2 right-2 flex items-center space-x-1 text-gray-200 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg">
                 <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                 <span className="text-sm font-semibold">
                   {movie.vote_average.toFixed(1)}
@@ -66,7 +66,7 @@ export default function MovieCard({ movie, index = 0 }: MovieCardProps) {
 
           {/* Info Section */}
           <div className="p-3 space-y-1">
-            <h3 className="font-semibold line-clamp-1 group-hover:text-blue-400 transition-colors">
+            <h3 className="font-semibold line-clamp-1 group-hover:text-blue-400 transition-colors text-gray-200">
               {title}
             </h3>
             {releaseDate && (

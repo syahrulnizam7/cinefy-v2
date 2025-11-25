@@ -24,8 +24,8 @@ export default function SignInPage() {
             />
           </div>
 
-          <h1 className="text-3xl font-bold mb-2 gradient-text">
-            Welcome to Cinefy
+          <h1 className="text-3xl font-bold mb-2 gradient-text text-white">
+            Welcome to <span className="text-[#39b5f0]">Cinefy</span>
           </h1>
           <p className="text-gray-400 mb-8">
             Sign in to track your favorite movies and TV shows

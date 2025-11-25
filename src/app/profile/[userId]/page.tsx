@@ -109,7 +109,7 @@ export default function UserProfilePage() {
           )}
 
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold mb-2">{userData.name || "Anonymous User"}</h1>
+            <h1 className="text-3xl font-bold mb-2 text-white">{userData.name || "Anonymous User"}</h1>
             <p className="text-gray-400 mb-4">{userData.email}</p>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-6">

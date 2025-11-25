@@ -220,8 +220,8 @@ export default function CommunityPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-4xl md:text-5xl font-bold mb-2 gradient-text">
-          Community
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white">
+          Commun<span className="text-[#39b5f0]">ity</span>
         </h1>
         <p className="text-gray-400">See what others are watching</p>
       </motion.div>
@@ -268,7 +268,7 @@ export default function CommunityPage() {
                     <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 group-hover:from-blue-600 group-hover:to-purple-700 transition-all duration-200" />
                   )}
                   <div className="text-left">
-                    <p className="font-semibold group-hover:text-blue-400 transition-colors duration-200">
+                    <p className="font-semibold group-hover:text-blue-400 text-gray-200 transition-colors duration-200">
                       {post.user?.name || "Anonymous"}
                     </p>
                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-200">
@@ -299,7 +299,7 @@ export default function CommunityPage() {
                     />
                   )}
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-200">{post.title}</h3>
                     <p className="text-gray-300">{post.content}</p>
                   </div>
                 </div>

@@ -131,8 +131,8 @@ export default function ExplorePage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-4xl md:text-5xl font-bold mb-2 gradient-text">
-          Explore
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white">
+          Explo<span className="text-[#39b5f0]">re</span>
         </h1>
         <p className="text-gray-400">Discover movies and TV shows</p>
       </motion.div>
@@ -235,8 +235,8 @@ export default function ExplorePage() {
               onClick={() => setIsGenresExpanded(!isGenresExpanded)}
               className="flex items-center space-x-2 hover:bg-white/5 rounded-lg transition-all duration-200 p-2 flex-1 text-left"
             >
-              <Filter className="w-5 h-5" />
-              <span className="font-semibold">Genres</span>
+              <Filter className="w-5 h-5" color="#99a1af" />
+              <span className="font-semibold text-gray-200">Genres</span>
               {selectedGenres.length > 0 && (
                 <span className="text-sm text-blue-400">
                   ({selectedGenres.length}/3 selected)
@@ -337,7 +337,7 @@ export default function ExplorePage() {
         animate={{ opacity: 1 }}
         className="mb-6"
       >
-        <h2 className="text-2xl font-bold">
+        <h2 className="text-2xl font-bold text-white">
           {getContentTitle()}
         </h2>
         <p className="text-gray-400 text-sm">
